@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="app_background">#FFFFFF</color>
+    <color name="subtract_button">#800080</color>
+    <color name="add_button">#FF69B4</color>
+    <color name="reset_button">#FF8C00</color>
+    <color name="step_button">#008000</color>
+
+</resources>
