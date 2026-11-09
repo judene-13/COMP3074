@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -34,6 +31,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
     private lateinit var sensorManager: SensorManager
     private var temperatureSensor: Sensor? = null
     private var gyroscopeSensor: Sensor? = null
+
     private var temperature by mutableStateOf<Float?>(null)
     private var gyroX by mutableStateOf(0f)
     private var gyroY by mutableStateOf(0f)
@@ -41,13 +39,13 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         temperatureSensor = sensorManager.getDefaultSensor(
             Sensor.TYPE_AMBIENT_TEMPERATURE
         )
-        gyroscopeSensor = sensorManager.getDefaultSensor(
-            Sensor.TYPE_GYROSCOPE
-        )
+        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+
         setContent {
             MaterialTheme {
                 SensorScreen(
@@ -56,12 +54,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
                     gyroX = gyroX,
                     gyroY = gyroY,
                     gyroZ = gyroZ,
-                    gyroscopeAvailable = gyroscopeSensor != null,
-                    onReset = {
-                        gyroX = 0f
-                        gyroY = 0f
-                        gyroZ = 0f
-                    }
+                    gyroscopeAvailable = gyroscopeSensor != null
                 )
             }
         }
@@ -69,6 +62,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
     override fun onResume() {
         super.onResume()
+
         temperatureSensor?.let { sensor ->
             sensorManager.registerListener(
                 this,
@@ -78,7 +72,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
         }
 
         gyroscopeSensor?.let { sensor ->
-           sensorManager.registerListener(
+            sensorManager.registerListener(
                 this,
                 sensor,
                 SensorManager.SENSOR_DELAY_NORMAL
@@ -96,12 +90,9 @@ class MainActivity : ComponentActivity(), SensorEventListener {
 
         when (event.sensor.type) {
             Sensor.TYPE_AMBIENT_TEMPERATURE -> {
-                val valTemp = event.values[0]
-                // Ignore invalid/uninitialized dummy readings (e.g. -1e30f default from Android Emulator)
-                if (valTemp > -273.15f) {
-                    temperature = valTemp
-                }
+                temperature = event.values[0]
             }
+
             Sensor.TYPE_GYROSCOPE -> {
                 gyroX = event.values[0]
                 gyroY = event.values[1]
@@ -109,6 +100,7 @@ class MainActivity : ComponentActivity(), SensorEventListener {
             }
         }
     }
+
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
     }
 }
@@ -120,15 +112,13 @@ fun SensorScreen(
     gyroX: Float,
     gyroY: Float,
     gyroZ: Float,
-    gyroscopeAvailable: Boolean,
-    onReset: () -> Unit
+    gyroscopeAvailable: Boolean
 ) {
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -136,26 +126,24 @@ fun SensorScreen(
                 text = "Android Sensor Monitor",
                 style = MaterialTheme.typography.headlineMedium
             )
+
             TemperatureCard(
                 temperature = temperature,
                 available = temperatureAvailable
             )
+
             GyroscopeCard(
                 x = gyroX,
                 y = gyroY,
                 z = gyroZ,
-                available = gyroscopeAvailable,
-                onReset = onReset
+                available = gyroscopeAvailable
             )
         }
     }
 }
 
 @Composable
-fun TemperatureCard(
-    temperature: Float?,
-    available: Boolean
-) {
+fun TemperatureCard(temperature: Float?, available: Boolean) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -163,6 +151,7 @@ fun TemperatureCard(
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(8.dp))
+
             when {
                 !available -> Text("Temperature sensor is not available.")
                 temperature == null -> Text("Waiting for sensor reading...")
@@ -176,13 +165,7 @@ fun TemperatureCard(
 }
 
 @Composable
-fun GyroscopeCard(
-    x: Float,
-    y: Float,
-    z: Float,
-    available: Boolean,
-    onReset: () -> Unit
-) {
+fun GyroscopeCard(x: Float, y: Float, z: Float, available: Boolean) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -195,10 +178,6 @@ fun GyroscopeCard(
                 Text("X: %.3f rad/s".format(x))
                 Text("Y: %.3f rad/s".format(y))
                 Text("Z: %.3f rad/s".format(z))
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onReset) {
-                    Text("Reset gyroscope")
-                }
             } else {
                 Text("Gyroscope is not available.")
             }
